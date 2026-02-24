@@ -1,4 +1,4 @@
-use async_openai::{Client, config::OpenAIConfig};
+use async_openai::{Client, config::OpenAIConfig, error::OpenAIError};
 use clap::Parser;
 use serde_json::{Value, json};
 use std::{env, fs, process, ptr::null};
@@ -39,18 +39,57 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         "anthropic/claude-haiku-4.5"
     };
-    //print!(model.to_string()); 
-    #[allow(unused_variables)]
-    let response: Value = client
+
+    
+
+    // print!("answer: {:?} ",response);
+    // You can use print statements as follows for debugging, they'll be visible when running tests.
+    // eprintln!("Logs from your program will appear here!");
+
+    let mut messages: Vec<Value> = vec![json!({"role": "user", "content": args.prompt})];
+        let mut response = request(&client, &messages).await?;
+        let mut response_message = &response["choices"][0]["message"];
+        messages.push(response_message.clone());
+
+        while let Some(tool_calls) = response_message["tool_calls"].as_array() {
+            let tool_call = &tool_calls[0];
+            let name = tool_call["function"]["name"].as_str().unwrap();
+            let id = tool_call["id"].as_str().unwrap();
+            let args: Value =
+                serde_json::from_str(tool_call["function"]["arguments"].as_str().unwrap())?;
+            let mut content = "".to_string();
+
+            if name == "Read" {
+                let file_path = args["file_path"].as_str().unwrap();
+                content = fs::read_to_string(file_path)?;
+            }
+
+            messages.push(json!({
+                "role": "tool",
+                "tool_call_id": id,
+                "content": content
+            }));
+
+            response = request(&client, &messages).await?;
+            response_message = &response["choices"][0]["message"];
+            messages.push(response_message.clone());
+        }
+        if let Some(content) = response_message["content"].as_str() {
+            println!("{}", content);
+        }
+
+    Ok(())
+    
+}
+
+
+pub async fn request (client :&Client<OpenAIConfig>, message:&Vec<Value>)->Result<Value,OpenAIError>{
+    
+    client
         .chat()
         .create_byot(json!({
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content":args.prompt
-                        }
-                    ],
-                    "model":model,
+                    "messages": message,
+                    "model":"anthropic/claude-haiku-4.5",
                     "tools":[{
           "type": "function",
           "function": {
@@ -69,74 +108,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           }
         }]
                 }))
-        .await?;
-
-    // print!("answer: {:?} ",response);
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    // eprintln!("Logs from your program will appear here!");
-
-    // TODO: Uncomment the lines below to pass the first stage
-    let message = &response["choices"][0]["message"];
-    if let Some(tool_called) = message["tool_calls"].as_array() {
-        let mut tool_calls = tool_called.to_vec();
-
-        while tool_calls.len() > 0 {
-            let mut next_msg = vec![];
-            for inx in 0..tool_calls.len() {
-                let tool_call = &tool_calls[inx];
-                let tool_call_id = tool_call["id"].as_str().unwrap();
-                let name = tool_call["function"]["name"].as_str().unwrap();
-                let arguments: Value =
-                    serde_json::from_str(tool_call["function"]["arguments"].as_str().unwrap())?;
-
-                if name == "Read" {
-                    let file_path = arguments["file_path"].as_str().unwrap();
-                    let contents = std::fs::read_to_string(file_path)?;
-                    //   print!("{}", contents);
-                    next_msg.push(json!({
-                      "role": "tool",
-                      "tool_call_id": tool_call_id,
-                      "content": contents
-                    }));
-                }
-            }
-            #[allow(unused_variables)]
-            let new_response: Value = client
-                .chat()
-                .create_byot(json!({
-                            "messages": next_msg,
-                            "model":model,
-                            "tools":[{
-                  "type": "function",
-                  "function": {
-                    "name": "Read",
-                    "description": "Read and return the contents of a file",
-                    "parameters": {
-                      "type": "object",
-                      "properties": {
-                        "file_path": {
-                          "type": "string",
-                          "description": "The path to the file to read"
-                        }
-                      },
-                      "required": ["file_path"]
-                    }
-                  }
-                }]
-                        }))
-                .await?;
-    // print!("answer: {:?} ",response);
- let  message = response["choices"][0]["message"].clone();
-        if let Some(tc) = message["tool_calls"].as_array() {
-            tool_calls = tc.to_vec();
-        } else {
-            break;
-        }
-
-        }
-    }
-    if let Some(content) = message["content"].as_str() {
-        println!("{}", content);
-    }
-    Ok(())
+        .await
 }

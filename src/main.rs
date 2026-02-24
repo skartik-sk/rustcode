@@ -35,11 +35,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or(false);
 
     let model = if is_local {
-        "z-ai/glm-4.5-air:free"
+        "glm-4.7"
     } else {
         "anthropic/claude-haiku-4.5"
     };
-    //print!(model.to_string());
+    //print!(model.to_string()); 
     #[allow(unused_variables)]
     let response: Value = client
         .chat()
@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             "content":args.prompt
                         }
                     ],
-                    "model":"anthropic/claude-haiku-4.5",
+                    "model":model,
                     "tools":[{
           "type": "function",
           "function": {
@@ -84,7 +84,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut next_msg = vec![];
             for inx in 0..tool_calls.len() {
                 let tool_call = &tool_calls[inx];
-                let tool_call_id = tool_call["id"].as_i64().unwrap();
+                let tool_call_id = tool_call["id"].as_str().unwrap();
                 let name = tool_call["function"]["name"].as_str().unwrap();
                 let arguments: Value =
                     serde_json::from_str(tool_call["function"]["arguments"].as_str().unwrap())?;
@@ -105,7 +105,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .chat()
                 .create_byot(json!({
                             "messages": next_msg,
-                            "model":"anthropic/claude-haiku-4.5",
+                            "model":model,
                             "tools":[{
                   "type": "function",
                   "function": {
@@ -125,6 +125,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }]
                         }))
                 .await?;
+    print!("answer: {:?} ",response);
             tool_calls = message["tool_calls"].as_array().unwrap();
         }
     }

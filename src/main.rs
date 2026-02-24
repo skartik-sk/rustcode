@@ -1,7 +1,7 @@
 use async_openai::{Client, config::OpenAIConfig};
 use clap::Parser;
 use serde_json::{Value, json};
-use std::{env, process};
+use std::{env, fs, process};
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -76,8 +76,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // eprintln!("Logs from your program will appear here!");
 
     // TODO: Uncomment the lines below to pass the first stage
-    if let Some(content) = response["choices"][0]["message"]["content"].as_str() {
-        println!("{}", content);
+
+    if let Some(arguments) =
+        response["choices"][0]["message"]["tool_calls"]["function"]["arguments"].as_str()
+    {
+        if let Some(name) =
+            response["choices"][0]["message"]["tool_calls"]["function"]["name"].as_str()
+        {
+            if name == "Read" {
+                //"{\"file_path\": \"/path/to/file.txt\"}"
+                if let Some(start) = arguments.find(r#""file_path": ""#) {
+                    let start_of_path = start + r#""file_path": ""#.len();
+                    if let Some(end) = arguments[start_of_path..].find('"') {
+                        let file_path = &arguments[start_of_path..start_of_path + end];
+                        println!("File path: {}", file_path); // Outputs: /path/to/file.txt
+                    }
+                }
+                fs::read_to_string("apple.py");
+            }
+        }
     }
 
     Ok(())

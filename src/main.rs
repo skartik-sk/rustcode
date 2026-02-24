@@ -1,7 +1,7 @@
 use async_openai::{Client, config::OpenAIConfig};
 use clap::Parser;
 use serde_json::{Value, json};
-use std::{env, fs, process};
+use std::{env, fs, process, ptr::null};
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -76,9 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // eprintln!("Logs from your program will appear here!");
 
     // TODO: Uncomment the lines below to pass the first stage
-    if let Some(content) = response["choices"][0]["message"]["content"].as_str() {
-        print!("{}", content);
-    } else {
+
         if let Some(arguments) =
             response["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"].as_str()
         {
@@ -100,6 +98,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
+        else if  let Some(content) = response["choices"][0]["message"]["content"].as_str() {print!("{}", content);
+     
     }
 
     Ok(())

@@ -71,7 +71,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let bash_command = args["command"].as_str().unwrap();
             print!("bash fomr user {} ", bash_command);
             // fs::write("run.sh", bash_command)?;
-            match Command::new("sh").arg("-C").arg(bash_command).output() {
+            match Command::new("sh").arg("-c").arg(bash_command).output() {
                 Ok(ouput) => {
                     let good = String::from_utf8_lossy(&ouput.stdout);
                     let bad = String::from_utf8_lossy(&ouput.stdout);

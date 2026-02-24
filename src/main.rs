@@ -78,7 +78,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // TODO: Uncomment the lines below to pass the first stage
     let message = &response["choices"][0]["message"];
     if let Some(tool_called) = message["tool_calls"].as_array() {
-        let mut tool_calls = tool_called;
+        let mut tool_calls = tool_called.to_vec();
 
         while tool_calls.len() > 0 {
             let mut next_msg = vec![];
@@ -101,7 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             #[allow(unused_variables)]
-            let response: Value = client
+            let new_response: Value = client
                 .chat()
                 .create_byot(json!({
                             "messages": next_msg,
@@ -125,8 +125,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }]
                         }))
                 .await?;
-    print!("answer: {:?} ",response);
-            tool_calls = message["tool_calls"].as_array().unwrap();
+    // print!("answer: {:?} ",response);
+ let  message = response["choices"][0]["message"].clone();
+        if let Some(tc) = message["tool_calls"].as_array() {
+            tool_calls = tc.to_vec();
+        } else {
+            break;
+        }
+
         }
     }
     if let Some(content) = message["content"].as_str() {

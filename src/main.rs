@@ -15,12 +15,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     let base_url = env::var("OPENROUTER_BASE_URL")
-        .unwrap_or_else(|_| "https://openrouter.ai/api/v1".to_string());
+        .unwrap_or_else(|_| "https://api.z.ai/api/coding/paas/v4/".to_string());
 
-    let api_key = env::var("OPENROUTER_API_KEY").unwrap_or_else(|_| {
-        eprintln!("OPENROUTER_API_KEY is not set");
-        process::exit(1);
-    });
+    // let api_key = env::var("API_KEY").unwrap_or_else(|_| {
+    //     eprintln!("OPENROUTER_API_KEY is not set");
+    //     process::exit(1);
+    // });
+    let api_key ="abc";
 
     let config = OpenAIConfig::new()
         .with_api_base(base_url)
@@ -36,6 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         "anthropic/claude-haiku-4.5"
     };
+    //print!(model.to_string());
     #[allow(unused_variables)]
     let response: Value = client
         .chat()
@@ -43,13 +45,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "messages": [
                 {
                     "role": "user",
-                    "content": args.prompt
+                    "content":"hy there"
                 }
             ],
-            "model":model
+            "model":"glm-4.7"
         }))
         .await?;
 
+
+    print!("answer: {:?} ",response);
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     eprintln!("Logs from your program will appear here!");
 

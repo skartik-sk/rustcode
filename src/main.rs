@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let base_url = env::var("OPENROUTER_BASE_URL")
         .unwrap_or_else(|_| "https://api.z.ai/api/coding/paas/v4/".to_string());
 
-    let api_key = env::var("API_KEY").unwrap_or_else(|_| {
+    let api_key = env::var("OPENROUTER_API_KEY").unwrap_or_else(|_| {
         eprintln!("OPENROUTER_API_KEY is not set");
         process::exit(1);
     });

@@ -17,11 +17,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let base_url = env::var("OPENROUTER_BASE_URL")
         .unwrap_or_else(|_| "https://api.z.ai/api/coding/paas/v4/".to_string());
 
-    // let api_key = env::var("API_KEY").unwrap_or_else(|_| {
-    //     eprintln!("OPENROUTER_API_KEY is not set");
-    //     process::exit(1);
-    // });
-    let api_key ="abc";
+    let api_key = env::var("API_KEY").unwrap_or_else(|_| {
+        eprintln!("OPENROUTER_API_KEY is not set");
+        process::exit(1);
+    });
+    
+    print!("{:?}",api_key);
+    // let api_key ="abc";
 
     let config = OpenAIConfig::new()
         .with_api_base(base_url)
@@ -48,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "content":"hy there"
                 }
             ],
-            "model":"glm-4.7"
+            "model":"anthropic/claude-haiku-4.5"
         }))
         .await?;
 

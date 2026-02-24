@@ -83,18 +83,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(name) =
             response["choices"][0]["message"]["tool_calls"][0]["function"]["name"].as_str()
         {
-            print!("{:?}{:?}", arguments, name);
+            // print!("{:?}{:?}", arguments, name);
             if name == "Read" {
                 //"{\"file_path\": \"/path/to/file.txt\"}"
                 if let Some(start) = arguments.find(r#""file_path": ""#) {
                     let start_of_path = start + r#""file_path": ""#.len();
                     if let Some(end) = arguments[start_of_path..].find('"') {
                         let file_path = &arguments[start_of_path..start_of_path + end];
-                        println!("File path: {}", file_path); // Outputs: /path/to/file.txt
+                        // println!("File path: {}", file_path); // Outputs: /path/to/file.txt
+                let file_content=fs::read_to_string(file_path).unwrap();
+                print!("{}",file_content);
                     }
                 }
-                let file_content=fs::read_to_string("grape.py").unwrap();
-                print!("{}",file_content);
             }
         }
     }

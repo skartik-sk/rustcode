@@ -2,8 +2,7 @@ use async_openai::{Client, config::OpenAIConfig, error::OpenAIError};
 use clap::Parser;
 use serde_json::{Value, json};
 use std::{
-    env, fs,
-    process::{self, Command},
+    env, fmt::format, fs, process::{self, Command}
 };
 
 #[derive(Parser)]
@@ -79,6 +78,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if !bad.is_empty(){
                         eprint!("{}",bad);
                     }
+                    content=format!("sucess {} error {} ",good,bad);
                 }
                 Err(e) => {
                     print!("{}", e.to_string())

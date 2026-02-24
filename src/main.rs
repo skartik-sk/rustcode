@@ -1,7 +1,10 @@
 use async_openai::{Client, config::OpenAIConfig, error::OpenAIError};
 use clap::Parser;
 use serde_json::{Value, json};
-use std::{env, fs, process::{self, Command}};
+use std::{
+    env, fs,
+    process::{self, Command},
+};
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -40,74 +43,70 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     "anthropic/claude-haiku-4.5"
     // };
 
-    
-
     // print!("answer: {:?} ",response);
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     // eprintln!("Logs from your program will appear here!");
 
     let mut messages: Vec<Value> = vec![json!({"role": "user", "content": args.prompt})];
-        let mut response = request(&client, &messages).await?;
-        let mut response_message = &response["choices"][0]["message"];
+    let mut response = request(&client, &messages).await?;
+    let mut response_message = &response["choices"][0]["message"];
+    messages.push(response_message.clone());
+
+    while let Some(tool_calls) = response_message["tool_calls"].as_array() {
+        let tool_call = &tool_calls[0];
+        let name = tool_call["function"]["name"].as_str().unwrap();
+        let id = tool_call["id"].as_str().unwrap();
+        let args: Value =
+            serde_json::from_str(tool_call["function"]["arguments"].as_str().unwrap())?;
+        let mut content = "".to_string();
+
+        if name == "Read" {
+            let file_path = args["file_path"].as_str().unwrap();
+            content = fs::read_to_string(file_path)?;
+        } else if name == "Write" {
+            let file_path = args["file_path"].as_str().unwrap();
+            let file_content = args["content"].as_str().unwrap();
+            fs::write(file_path, file_content)?;
+        } else if name == "Bash" {
+            let bash_command = args["command"].as_str().unwrap();
+            print!("bash fomr user {} ", bash_command);
+            // fs::write("run.sh", bash_command)?;
+            match Command::new("sh").arg("-C").arg(bash_command).output() {
+                Ok(ouput) => {
+                    let good = String::from_utf8_lossy(&ouput.stdout);
+                    let bad = String::from_utf8_lossy(&ouput.stdout);
+                    print!("{}", good);
+                    if !bad.is_empty(){
+                        eprint!("{}",bad);
+                    }
+                }
+                Err(e) => {
+                    print!("{}", e.to_string())
+                }
+            }
+        }
+
+        messages.push(json!({
+            "role": "tool",
+            "tool_call_id": id,
+            "content": content
+        }));
+
+        response = request(&client, &messages).await?;
+        response_message = &response["choices"][0]["message"];
         messages.push(response_message.clone());
-
-        while let Some(tool_calls) = response_message["tool_calls"].as_array() {
-            let tool_call = &tool_calls[0];
-            let name = tool_call["function"]["name"].as_str().unwrap();
-            let id = tool_call["id"].as_str().unwrap();
-            let args: Value =
-                serde_json::from_str(tool_call["function"]["arguments"].as_str().unwrap())?;
-            let mut content = "".to_string();
-
-            if name == "Read" {
-                let file_path = args["file_path"].as_str().unwrap();
-                content = fs::read_to_string(file_path)?;
-            }
-            else if name =="Write"{
-                let file_path = args["file_path"].as_str().unwrap();
-                let file_content = args["content"].as_str().unwrap();
-                fs::write(file_path, file_content)?;
-            }
-            else if name =="Bash"{
-                let bash_command = args["command"].as_str(
-                    
-                ).unwrap();
-                print!("bash fomr user {} ",bash_command);
-                // fs::write("run.sh", bash_command)?;
-               match   Command::new(bash_command).output(){
-                   Ok(ouput)=>{
-                       print!("{}",ouput.status)
-                   }
-                   Err(e)=>{
-                       print!("{}",e.to_string())
-                   }
-               }
-            
-               
-                
-            }
-
-            messages.push(json!({
-                "role": "tool",
-                "tool_call_id": id,
-                "content": content
-            }));
-
-            response = request(&client, &messages).await?;
-            response_message = &response["choices"][0]["message"];
-            messages.push(response_message.clone());
-        }
-        if let Some(content) = response_message["content"].as_str() {
-            println!("{}", content);
-        }
+    }
+    if let Some(content) = response_message["content"].as_str() {
+        println!("{}", content);
+    }
 
     Ok(())
-    
 }
 
-
-pub async fn request (client :&Client<OpenAIConfig>, message:&Vec<Value>)->Result<Value,OpenAIError>{
-    
+pub async fn request(
+    client: &Client<OpenAIConfig>,
+    message: &Vec<Value>,
+) -> Result<Value, OpenAIError> {
     client
         .chat()
         .create_byot(json!({

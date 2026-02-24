@@ -63,6 +63,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let file_path = args["file_path"].as_str().unwrap();
                 content = fs::read_to_string(file_path)?;
             }
+            else if name =="Write"{
+                let file_path = args["file_path"].as_str().unwrap();
+                let file_content = args["content"].as_str().unwrap();
+                fs::write(file_path, file_content)?;
+            }
 
             messages.push(json!({
                 "role": "tool",
@@ -90,7 +95,8 @@ pub async fn request (client :&Client<OpenAIConfig>, message:&Vec<Value>)->Resul
         .create_byot(json!({
                     "messages": message,
                     "model":"anthropic/claude-haiku-4.5",
-                    "tools":[{
+                    "tools":[
+                        {
           "type": "function",
           "function": {
             "name": "Read",
@@ -104,6 +110,26 @@ pub async fn request (client :&Client<OpenAIConfig>, message:&Vec<Value>)->Resul
                 }
               },
               "required": ["file_path"]
+            }
+          }
+        },{
+          "type": "function",
+          "function": {
+            "name": "Write",
+            "description": "Write content to a file",
+            "parameters": {
+              "type": "object",
+              "required": ["file_path", "content"],
+              "properties": {
+                "file_path": {
+                  "type": "string",
+                  "description": "The path of the file to write to"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "The content to write to the file"
+                }
+              }
             }
           }
         }]

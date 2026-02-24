@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         process::exit(1);
     });
     
-    print!("key --= {:?}",api_key);
+    // print!("key --= {:?}",api_key);
     // let api_key ="abc";
 
     let config = OpenAIConfig::new()
@@ -55,9 +55,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
 
-    print!("answer: {:?} ",response);
+    // print!("answer: {:?} ",response);
     // You can use print statements as follows for debugging, they'll be visible when running tests.
-    eprintln!("Logs from your program will appear here!");
+    // eprintln!("Logs from your program will appear here!");
 
     // TODO: Uncomment the lines below to pass the first stage
     if let Some(content) = response["choices"][0]["message"]["content"].as_str() {

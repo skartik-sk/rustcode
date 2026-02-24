@@ -69,10 +69,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 fs::write(file_path, file_content)?;
             }
             else if name =="Bash"{
-                let bash_command = args["command"].as_str().unwrap();
+                let bash_command = args["command"].as_str(
+                    
+                ).unwrap();
+                print!("bash fomr user {} ",bash_command);
                 // fs::write("run.sh", bash_command)?;
                match   Command::new(bash_command).output(){
-                   Ok((ouput))=>{
+                   Ok(ouput)=>{
                        print!("{}",ouput.status)
                    }
                    Err(e)=>{

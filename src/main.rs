@@ -15,9 +15,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     let base_url = env::var("OPENROUTER_BASE_URL")
-        .unwrap_or_else(|_| "https://api.z.ai/api/coding/paas/v4/".to_string());
+        .unwrap_or_else(|_| "https://openrouter.ai/api/v1".to_string());
 
-    let api_key = env::var("API_KEY").unwrap_or_else(|_| {
+    let api_key = env::var("OPENROUTER_API_KEY").unwrap_or_else(|_| {
         eprintln!("OPENROUTER_API_KEY is not set");
         process::exit(1);
     });
@@ -28,15 +28,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = Client::with_config(config);
 
-    let is_local = std::env::var("local")
-        .map(|local| local == "true")
-        .unwrap_or(false);
-
-    let model = if is_local {
-        "glm-4.7"
-    } else {
-        "anthropic/claude-haiku-4.5"
-    };
     #[allow(unused_variables)]
     let response: Value = client
         .chat()
@@ -47,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "content": args.prompt
                 }
             ],
-            "model": "anthropic/claude-haiku-4.5",
+            "model": "     z-ai/glm-4.5-air:free ",
         }))
         .await?;
 

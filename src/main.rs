@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         process::exit(1);
     });
     
-    print!("{:?}",api_key);
+    print!("key --= {:?}",api_key);
     // let api_key ="abc";
 
     let config = OpenAIConfig::new()
@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "messages": [
                 {
                     "role": "user",
-                    "content":"hy there"
+                    "content":args.prompt
                 }
             ],
             "model":"anthropic/claude-haiku-4.5"
@@ -60,9 +60,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!("Logs from your program will appear here!");
 
     // TODO: Uncomment the lines below to pass the first stage
-    // if let Some(content) = response["choices"][0]["message"]["content"].as_str() {
-    //     println!("{}", content);
-    // }
+    if let Some(content) = response["choices"][0]["message"]["content"].as_str() {
+        println!("{}", content);
+    }
 
     Ok(())
 }

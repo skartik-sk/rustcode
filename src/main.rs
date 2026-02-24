@@ -71,17 +71,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }))
         .await?;
 
-     print!("answer: {:?} ",response);
+     // print!("answer: {:?} ",response);
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     // eprintln!("Logs from your program will appear here!");
 
     // TODO: Uncomment the lines below to pass the first stage
 
     if let Some(arguments) =
-        response["choices"][0]["message"]["tool_calls"]["function"]["arguments"].as_str()
+        response["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"].as_str()
     {
         if let Some(name) =
-            response["choices"][0]["message"]["tool_calls"]["function"]["name"].as_str()
+            response["choices"][0]["message"]["tool_calls"][0]["function"]["name"].as_str()
         {
             print!("{:?}{:?}", arguments, name);
             if name == "Read" {
@@ -93,7 +93,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("File path: {}", file_path); // Outputs: /path/to/file.txt
                     }
                 }
-                fs::read_to_string("apple.py");
+                let file_content=fs::read_to_string("grape.py").unwrap();
+                print!("{}",file_content);
             }
         }
     }

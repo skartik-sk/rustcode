@@ -76,31 +76,62 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // eprintln!("Logs from your program will appear here!");
 
     // TODO: Uncomment the lines below to pass the first stage
+    let message = &response["choices"][0]["message"];
+ if let Some(tool_called) = message["tool_calls"].as_array(){
+     let mut tool_calls=tool_called;
+ 
+    while tool_calls.len()>0{
+        let mut next_msg =vec![];
+        for inx in 0..tool_calls.len(){
+            
+        let tool_call = &tool_calls[inx];
+        let tool_call_id = tool_call["id"].as_str().unwrap();
+        let name = tool_call["function"]["name"].as_str().unwrap();
+        let arguments: Value =
+            serde_json::from_str(tool_call["function"]["arguments"].as_str().unwrap())?;
 
-        if let Some(arguments) =
-            response["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"].as_str()
-        {
-            if let Some(name) =
-                response["choices"][0]["message"]["tool_calls"][0]["function"]["name"].as_str()
-            {
-                // print!("{:?}{:?}", arguments, name);
-                if name == "Read" {
-                    //"{\"file_path\": \"/path/to/file.txt\"}"
-                    if let Some(start) = arguments.find(r#""file_path": ""#) {
-                        let start_of_path = start + r#""file_path": ""#.len();
-                        if let Some(end) = arguments[start_of_path..].find('"') {
-                            let file_path = &arguments[start_of_path..start_of_path + end];
-                            // println!("File path: {}", file_path); // Outputs: /path/to/file.txt
-                            let file_content = fs::read_to_string(file_path).unwrap();
-                            print!("{}", file_content);
-                        }
-                    }
-                }
-            }
+        if name == "Read" {
+            let file_path = arguments["file_path"].as_str().unwrap();
+            let contents = std::fs::read_to_string(file_path)?;
+            //   print!("{}", contents);
+        next_msg.push(json!({
+          "role": "tool",
+          "tool_call_id": tool_call_id,
+          "content": contents
+        }));
         }
-        else if  let Some(content) = response["choices"][0]["message"]["content"].as_str() {print!("{}", content);
-     
-    }
+        
+        }
+        #[allow(unused_variables)]
+        let response: Value = client
+            .chat()
+            .create_byot(json!({
+                        "messages": next_msg,
+                        "model":"anthropic/claude-haiku-4.5",
+                        "tools":[{
+              "type": "function",
+              "function": {
+                "name": "Read",
+                "description": "Read and return the contents of a file",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "file_path": {
+                      "type": "string",
+                      "description": "The path to the file to read"
+                    }
+                  },
+                  "required": ["file_path"]
+                }
+              }
+            }]
+                    }))
+            .await?;
+        tool_calls = message["tool_calls"].as_array().unwrap();
+    } }
 
+    else if let Some(content) = message["content"].as_str() {
+        println!("{}", content);
+    }
     Ok(())
 }

@@ -27,7 +27,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_api_key(api_key);
 
     let client = Client::with_config(config);
+    let is_local = std::env::var("local")
+        .map(|local| local == "true")
+        .unwrap_or(false);
 
+    let model = if is_local {
+        "z-ai/glm-4.5-air:free"
+    } else {
+        "anthropic/claude-haiku-4.5"
+    };
     #[allow(unused_variables)]
     let response: Value = client
         .chat()
@@ -38,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "content": args.prompt
                 }
             ],
-            "model": "     z-ai/glm-4.5-air:free ",
+            "model":model
         }))
         .await?;
 

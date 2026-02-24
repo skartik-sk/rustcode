@@ -83,6 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(name) =
             response["choices"][0]["message"]["tool_calls"]["function"]["name"].as_str()
         {
+            print!("{:?}{:?}", arguments, name);
             if name == "Read" {
                 //"{\"file_path\": \"/path/to/file.txt\"}"
                 if let Some(start) = arguments.find(r#""file_path": ""#) {

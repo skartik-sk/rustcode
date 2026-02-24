@@ -1,7 +1,7 @@
 use async_openai::{Client, config::OpenAIConfig, error::OpenAIError};
 use clap::Parser;
 use serde_json::{Value, json};
-use std::{env, fs, process, ptr::null};
+use std::{env, fs, process::{self, Command}};
 
 #[derive(Parser)]
 #[command(author, version, about)]
@@ -30,15 +30,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_api_key(api_key);
 
     let client = Client::with_config(config);
-    let is_local = std::env::var("local")
-        .map(|local| local == "true")
-        .unwrap_or(false);
+    // let is_local = std::env::var("local")
+    //     .map(|local| local == "true")
+    //     .unwrap_or(false);
 
-    let model = if is_local {
-        "glm-4.7"
-    } else {
-        "anthropic/claude-haiku-4.5"
-    };
+    // let model = if is_local {
+    //     "glm-4.7"
+    // } else {
+    //     "anthropic/claude-haiku-4.5"
+    // };
 
     
 
@@ -67,6 +67,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let file_path = args["file_path"].as_str().unwrap();
                 let file_content = args["content"].as_str().unwrap();
                 fs::write(file_path, file_content)?;
+            }
+            else if name =="Bash"{
+                let bash_command = args["command"].as_str().unwrap();
+                // fs::write("run.sh", bash_command)?;
+               match   Command::new(bash_command).output(){
+                   Ok((ouput))=>{
+                       print!("{}",ouput.status)
+                   }
+                   Err(e)=>{
+                       print!("{}",e.to_string())
+                   }
+               }
+            
+               
+                
             }
 
             messages.push(json!({
@@ -128,6 +143,22 @@ pub async fn request (client :&Client<OpenAIConfig>, message:&Vec<Value>)->Resul
                 "content": {
                   "type": "string",
                   "description": "The content to write to the file"
+                }
+              }
+            }
+          }
+        },{
+          "type": "function",
+          "function": {
+            "name": "Bash",
+            "description": "Execute a shell command",
+            "parameters": {
+              "type": "object",
+              "required": ["command"],
+              "properties": {
+                "command": {
+                  "type": "string",
+                  "description": "The command to execute"
                 }
               }
             }
